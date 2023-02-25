@@ -1,0 +1,50 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:1.21
+    container_name: "joke-database-nginx"
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/src
+      - ./docker/nginx:/etc/nginx/conf.d
+    networks:
+      - joke-database
+
+  app:
+    container_name: "joke-database-app"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/src
+    networks:
+      - joke-database
+    ports:
+      - 5173:5173
+
+  mysql:
+    image: mysql:8.0
+    command: --max_allowed_packet=32505856
+    container_name: "joke-database-mysql"
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 3306:3306
+    networks:
+      - joke-database
+
+  joke-redis:
+    image: redis:alpine
+    container_name: "joke-redis"
+    ports:
+      - 16379:6379
+    networks:
+      - joke-database
+
+networks:
+  joke-database:
+    driver: bridge
